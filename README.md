@@ -55,7 +55,7 @@ We introduce **SynMirrorV2**, a large-scale synthetic dataset containing **207K*
 
 - [] Release the SynMirrorV2 Dataset
 - [] Release pre-trained checkpoints
-- [] Release codebase for training and evaluation
+- [X]  [07/06/2025] 🔥 Release codebase for creating synthetic dataset [Link](BlenderProc/reflection/README.md)
 - [] Add interactive notebook demo for inference
 
 ---
