@@ -1,21 +1,3 @@
-"""
-main.py
-
-Main entry point for the MirrorVerse rendering pipeline.
-
-Responsibilities:
-- Parses command-line arguments.
-- Loads input data (objects, HDRIs, textures, camera poses).
-- Coordinates rendering for multiple scenes.
-- Handles mirror placement and object validation.
-- Calls functions from all other modules (bproc_io, render_main, geometry, errors).
-
-Main functions:
-- main: Entry function triggered by CLI.
-- bulk_process: Iterates over object list and triggers rendering per object.
-"""
-
-
 import blenderproc as bproc
 import argparse
 import os
@@ -37,6 +19,25 @@ This code identifies the current script's directory, infers the project root
 directory (assumed to be one level up), and ensures the project root is added 
 to sys.path for module import access.
 """
+
+"""
+main.py
+
+Main entry point for the MirrorVerse rendering pipeline.
+
+Responsibilities:
+- Parses command-line arguments.
+- Loads input data (objects, HDRIs, textures, camera poses).
+- Coordinates rendering for multiple scenes.
+- Handles mirror placement and object validation.
+- Calls functions from all other modules (bproc_io, render_main, geometry, errors).
+
+Main functions:
+- main: Entry function triggered by CLI.
+- bulk_process: Iterates over object list and triggers rendering per object.
+"""
+
+
 current_script_dir = os.path.dirname(os.path.abspath(__file__))
 log.info(f"Current script directory: {current_script_dir}")
 # Assuming 'reflection' is directly inside the root project directory (where rerun.py is)

@@ -1,3 +1,10 @@
+
+import blenderproc as bproc
+import bpy
+import json
+from loguru import logger as log
+
+
 """
 errors.py
 
@@ -14,12 +21,6 @@ Classes:
 - SpuriousObjException, CollisionException: Custom exceptions for handling invalid object states.
 - ErrorRecord: Tracks and logs errors across scenes and objects.
 """
-
-
-import bpy
-import json
-from loguru import logger as log
-
 
 """
 The following code (for finding spurioous objects) is copied from scripts/find_spurious.py

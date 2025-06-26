@@ -1,29 +1,12 @@
-"""
-bproc_io.py
 
-Handles all input/output and file-related operations in the pipeline.
-
-Functions:
-- load_3d_obj: Loads and configures a 3D object into the BlenderProc scene.
-- load_scene: Sets up the base scene.
-- sample_hdri, sample_floor: Samples and applies HDRIs and floor textures.
-- load_floor_textures: Loads floor texture assets.
-- delete_objs, remove_selected_object: Removes objects from the scene.
-- write_json_file, save_cam_states: Handles output data saving (camera poses, metadata).
-- get_timestamp: Returns a timestamp string for filenames.
-- is_processed: Checks if a scene was already processed.
-- add_properties_to_imported_mesh: Adds custom category metadata to imported meshes.
-"""
-
-
+import blenderproc as bproc
 import os
 import json
 import re
 import bpy
 from pathlib import Path
 import numpy as np
-from typing import List, Optional, Dict
-import blenderproc as bproc
+from typing import List, Optional, Dict, Callable
 from loguru import logger as log
 import datetime
 
@@ -41,6 +24,23 @@ from reflection.errors import (
 
 from reflection.geometry import Mirrors
 
+"""
+bproc_io.py
+
+Handles all input/output and file-related operations in the pipeline.
+
+Functions:
+- load_3d_obj: Loads and configures a 3D object into the BlenderProc scene.
+- load_scene: Sets up the base scene.
+- sample_hdri, sample_floor: Samples and applies HDRIs and floor textures.
+- load_floor_textures: Loads floor texture assets.
+- delete_objs, remove_selected_object: Removes objects from the scene.
+- write_json_file, save_cam_states: Handles output data saving (camera poses, metadata).
+- get_timestamp: Returns a timestamp string for filenames.
+- is_processed: Checks if a scene was already processed.
+- add_properties_to_imported_mesh: Adds custom category metadata to imported meshes.
+"""
+
 def get_timestamp():
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     return timestamp
@@ -54,10 +54,9 @@ def remove_selected_object():
         # Unlink the object from the current collection
         bpy.data.objects.remove(obj, do_unlink=True)
 
-def load_obj(filepath: str, 
-             use_legacy_obj_import: bool = False,
-             **kwargs):
-    """Import all objects for the given file. This function is called by load_scene and load_3D_obj
+def load_obj(filepath: str, use_legacy_obj_import: bool = False, **kwargs):
+    """
+    Import all objects for the given file. This function is called by load_scene and load_3D_obj
 
     In .obj files a list of objects can be saved in.
     In .ply files only one object can be saved so the list has always at most one element
@@ -68,91 +67,127 @@ def load_obj(filepath: str,
     :param kwargs: all other params are handed directly to the bpy loading fct. check the corresponding documentation
     :return: The list of loaded mesh objects.
     """
+    # Store previously selected objects to identify newly imported ones
     previously_selected_objects = bpy.context.selected_objects
-    if filepath.endswith(".obj"):
-        # load an .obj file:
-        if use_legacy_obj_import:
-            bpy.ops.import_scene.obj(filepath=filepath)  #, **kwargs)
-        else:
-            bpy.ops.wm.obj_import(filepath=filepath) #, **kwargs)
-    elif filepath.endswith(".ply"):
-        PLY_TEXTURE_FILE_COMMENT = "comment TextureFile "
-        model_name = os.path.basename(filepath)
+    
+    # Get file extension for format detection
+    file_extension = os.path.splitext(filepath)[1].lower()
+    
+    # Define format handlers - maps extensions to their import functions
+    format_handlers = {
+        '.obj': lambda: _handle_obj_import(filepath, use_legacy_obj_import),
+        '.ply': lambda: _handle_ply_import(filepath, **kwargs),
+        '.dae': lambda: bpy.ops.wm.collada_import(filepath=filepath),
+        '.stl': lambda: _handle_stl_import(filepath, **kwargs),
+        '.fbx': lambda: bpy.ops.import_scene.fbx(filepath=filepath),
+        '.glb': lambda: bpy.ops.import_scene.gltf(filepath=filepath, merge_vertices=True),
+        '.gltf': lambda: bpy.ops.import_scene.gltf(filepath=filepath, merge_vertices=True),
+        '.usda': lambda: bpy.ops.wm.usd_import(filepath=filepath),
+        '.usd': lambda: bpy.ops.wm.usd_import(filepath=filepath),
+        '.usdc': lambda: bpy.ops.wm.usd_import(filepath=filepath)
+    }
+    
+    # Execute the appropriate handler
+    if file_extension in format_handlers:
+        format_handlers[file_extension]()
+    else:
+        raise ValueError(f"Unsupported file format: {file_extension}")
+    
+    # Return newly selected objects
+    return [obj for obj in bpy.context.selected_objects if obj not in previously_selected_objects]
 
-        # Read file
-        with open(filepath, "r", encoding="latin-1") as file:
-            ply_file_content = file.read()
 
-        # Check if texture file is given
-        if PLY_TEXTURE_FILE_COMMENT in ply_file_content:
-            # Find name of texture file
-            texture_file_name = re.search(
-                f"{PLY_TEXTURE_FILE_COMMENT}(.*)\n", ply_file_content
-            ).group(1)
+def _handle_obj_import(filepath: str, use_legacy_obj_import: bool):
+    """Handle OBJ file import with legacy option."""
+    if use_legacy_obj_import:
+        bpy.ops.import_scene.obj(filepath=filepath)
+    else:
+        bpy.ops.wm.obj_import(filepath=filepath)
 
-            # Determine full texture file path
-            texture_file_path = os.path.join(
-                os.path.dirname(filepath), texture_file_name
-            )
-            material = create_material_from_texture(
-                texture_file_path, material_name=f"ply_{model_name}_texture_model"
-            )
 
-            # Change content of ply file to work with blender ply importer
-            new_ply_file_content = ply_file_content
-            new_ply_file_content = new_ply_file_content.replace(
-                "property float texture_u", "property float s"
-            )
-            new_ply_file_content = new_ply_file_content.replace(
-                "property float texture_v", "property float t"
-            )
-
-            # Create temporary .ply file
-            tmp_ply_file = os.path.join(Utility.get_temporary_directory(), model_name)
-            with open(tmp_ply_file, "w", encoding="latin-1") as file:
-                file.write(new_ply_file_content)
-
-            # Load .ply mesh
-            bpy.ops.import_mesh.ply(filepath=tmp_ply_file, **kwargs)
-
-        else:  # If no texture was given
-            # load a .ply mesh
-            bpy.ops.import_mesh.ply(filepath=filepath, **kwargs)
-            # Create default material
-            material = create_material("ply_material")
-            material.map_vertex_color()
-        selected_objects = [
-            obj
-            for obj in bpy.context.selected_objects
-            if obj not in previously_selected_objects
-        ]
+def _handle_ply_import(filepath: str, **kwargs):
+    """Handle PLY file import with texture processing."""
+    PLY_TEXTURE_FILE_COMMENT = "comment TextureFile "
+    model_name = os.path.basename(filepath)
+    
+    # Read PLY file content
+    with open(filepath, "r", encoding="latin-1") as file:
+        ply_file_content = file.read()
+    
+    # Process PLY with texture if texture comment exists
+    if PLY_TEXTURE_FILE_COMMENT in ply_file_content:
+        # Extract texture filename
+        texture_file_name = re.search(f"{PLY_TEXTURE_FILE_COMMENT}(.*)\n", ply_file_content).group(1)
+        texture_file_path = os.path.join(os.path.dirname(filepath), texture_file_name)
+        
+        # Create material from texture
+        material = create_material_from_texture(
+            texture_file_path, material_name=f"ply_{model_name}_texture_model"
+        )
+        
+        # Modify PLY content for Blender compatibility
+        modified_content = ply_file_content.replace("property float texture_u", "property float s")
+        modified_content = modified_content.replace("property float texture_v", "property float t")
+        
+        # Write temporary PLY file and import
+        tmp_ply_file = os.path.join(Utility.get_temporary_directory(), model_name)
+        with open(tmp_ply_file, "w", encoding="latin-1") as file:
+            file.write(modified_content)
+        
+        bpy.ops.import_mesh.ply(filepath=tmp_ply_file, **kwargs)
+        
+        # Apply material to imported objects
+        selected_objects = [obj for obj in bpy.context.selected_objects]
         for obj in selected_objects:
             obj.data.materials.append(material.blender_obj)
-    elif filepath.endswith(".dae"):
-        bpy.ops.wm.collada_import(filepath=filepath)
-    elif filepath.lower().endswith(".stl"):
-        # load a .stl file
-        bpy.ops.wm.stl_import(filepath=filepath, **kwargs)
-        # add a default material to stl file
-        mat = bpy.data.materials.new(name="stl_material")
-        mat.use_nodes = True
-        selected_objects = [
-            obj
-            for obj in bpy.context.selected_objects
-            if obj not in previously_selected_objects
-        ]
+    
+    else:
+        # Import PLY without texture
+        bpy.ops.import_mesh.ply(filepath=filepath, **kwargs)
+        
+        # Create and apply default material with vertex colors
+        material = create_material("ply_material")
+        material.map_vertex_color()
+        
+        selected_objects = [obj for obj in bpy.context.selected_objects]
         for obj in selected_objects:
-            obj.data.materials.append(mat)
-    elif filepath.lower().endswith(".fbx"):
-        bpy.ops.import_scene.fbx(filepath=filepath)
-    elif filepath.lower().endswith(".glb") or filepath.lower().endswith(".gltf"):
-        bpy.ops.import_scene.gltf(filepath=filepath, merge_vertices=True)
-    elif (
-        filepath.lower().endswith(".usda")
-        or filepath.lower().endswith(".usd")
-        or filepath.lower().endswith(".usdc")
-    ):
-        bpy.ops.wm.usd_import(filepath=filepath)
+            obj.data.materials.append(material.blender_obj)
+
+
+def _handle_stl_import(filepath: str, **kwargs):
+    """Handle STL file import with default material."""
+    bpy.ops.wm.stl_import(filepath=filepath, **kwargs)
+    
+    # Create and apply default material
+    mat = bpy.data.materials.new(name="stl_material")
+    mat.use_nodes = True
+    
+    selected_objects = [obj for obj in bpy.context.selected_objects]
+    for obj in selected_objects:
+        obj.data.materials.append(mat)
+
+
+def register_format_handler(extension: str, handler_function: Callable):
+    """
+    Register a custom format handler for extending supported file types.
+    
+    :param extension: File extension (e.g., '.custom')
+    :param handler_function: Function to handle the import
+    """
+    # This would require modifying the format_handlers dict to be module-level
+    # For now, this is a placeholder showing how extension could work
+    pass
+
+
+# Example usage for extending with new formats:
+def add_custom_format_support():
+    """Example of how you could extend this for custom formats."""
+    def handle_custom_format(filepath, **kwargs):
+        # Custom import logic here
+        bpy.ops.custom_import_operator(filepath=filepath, **kwargs)
+    
+    # You would need to modify the format_handlers dict in load_obj to support this
+    # or make format_handlers a module-level variable
 
 def add_properties_to_imported_mesh(filepath, mesh_objects, **kwargs):
     # Add properties to all objects of the imported mesh

@@ -1,3 +1,15 @@
+
+import blenderproc as bproc
+import math
+import numpy as np
+import bpy
+import mathutils
+from mathutils import Vector, Matrix
+import random
+from typing import List
+
+from blenderproc.python.types.MeshObjectUtility import MeshObject, Entity
+
 """
 geometry.py
 
@@ -12,17 +24,6 @@ Functions:
 - find_root_obj: Finds the topmost parent of an object.
 - Mirrors (class): Manages mirror-frame pairs and their configuration in the scene.
 """
-
-
-import math
-import numpy as np
-import bpy
-import mathutils
-from mathutils import Vector, Matrix
-import random
-from typing import List
-
-from blenderproc.python.types.MeshObjectUtility import MeshObject, Entity
 
 ### MAPPING LIST
 MIRROR_FRAME_MAPPING = {

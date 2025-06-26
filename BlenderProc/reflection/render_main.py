@@ -1,19 +1,5 @@
-"""
-render_main.py
 
-Responsible for rendering pipeline tasks: camera sampling, lighting, rendering, and test set generation.
-
-Functions:
-- init: Initializes BlenderProc scene and renderer.
-- scene_lighting, create_light: Sets up lighting for the scene.
-- sample_cams: Randomly samples valid camera poses.
-- render_views: Renders images, depth maps, normal maps, and segmentation masks.
-- create_special_test_set: Generates special evaluation renderings (e.g., for pose changes).
-- random_pose_indices: Selects camera pose indices for test set.
-- single_process: Combines object loading, rendering, and saving for one sample.
-"""
-
-
+import blenderproc as bproc
 import math
 import numpy as np
 from pathlib import Path
@@ -25,7 +11,6 @@ import time
 import sys
 import glob
 
-import blenderproc as bproc
 from blenderproc.python.types.MeshObjectUtility import MeshObject
 from blenderproc.python.utility.Utility import Utility
 from blenderproc.python.camera.CameraUtility import rotation_from_forward_vec
@@ -40,7 +25,21 @@ from reflection.bproc_io import (
                             is_processed)
 from reflection.geometry import (
                             normalise_objs)
+'''
+render_main.py
 
+Responsible for rendering pipeline tasks: camera sampling, lighting, rendering, and test set generation.
+
+Functions:
+- init: Initializes BlenderProc scene and renderer.
+- scene_lighting, create_light: Sets up lighting for the scene.
+- sample_cams: Randomly samples valid camera poses.
+- render_views: Renders images, depth maps, normal maps, and segmentation masks.
+- create_special_test_set: Generates special evaluation renderings (e.g., for pose changes).
+- random_pose_indices: Selects camera pose indices for test set.
+- single_process: Combines object loading, rendering, and saving for one sample.
+"""
+'''
 def create_light(name, light_type, energy, location, rotation, radius=0.25):
     light = bproc.types.Light(light_type=light_type, name=name)
     light.set_energy(energy)
