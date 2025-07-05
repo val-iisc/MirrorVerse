@@ -203,4 +203,4 @@ fiftyone app connect --destination test@<remote-ip>
 ## 📂 Public Dataset
 
 - Dataset hosted on HuggingFace:  
-  👉 [Mirror-Fusion/Objaverse-Mirrors](https://huggingface.co/datasets/Mirror-Fusion/Objaverse-Mirrors)
+  👉 **Coming Soon!** 
