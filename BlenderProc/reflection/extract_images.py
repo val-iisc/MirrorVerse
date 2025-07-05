@@ -4,31 +4,76 @@ import h5py
 from PIL import Image
 import argparse
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../BrushNet/examples/brushnet/dataset"))
-from dataset import HDF5Dataset
+from scene_compositor.dataset import HDF5Dataset
 import pandas as pd
 import random
 
 # seed
 random.seed(7564)
 
+
+def get_image_extraction_parser():
+    parser = argparse.ArgumentParser(description="Extract images from HDF5 files")
+
+    # Input Options Group
+    input_group = parser.add_argument_group("Input Options")
+    input_group.add_argument(
+        "--input_dir",
+        type=str, 
+        required=True,
+        help="Input directory containing HDF5 files.",
+    )
+    input_group.add_argument(
+        "--input_file",
+        type=str,
+        default=None, 
+        help="Input file containing the UIDs to extract (e.g., a text file with one UID per line).",
+    )
+    input_group.add_argument(
+        "--count",
+        type=int,
+        default=None,
+        help="Number of images to extract. If not specified, all images in input_file (or all found) will be extracted.",
+    )
+
+    # Output Options Group
+    output_group = parser.add_argument_group("Output Options")
+    output_group.add_argument(
+        "--output_dir",
+        type=str, 
+        required=True,
+        help="Output directory where extracted images will be saved.",
+    )
+
+    # Extraction Type Options Group
+    extraction_group = parser.add_argument_group("Extraction Type Options")
+    extraction_group.add_argument(
+        "--extract_mask",
+        action="store_true",
+        help="Extract mask images (binary segmentation masks).",
+    )
+    extraction_group.add_argument(
+        "--extract_masked_image",
+        action="store_true",
+        help="Extract images with masks applied (e.g., foreground objects only).",
+    )
+    extraction_group.add_argument(
+        "--extract_depth",
+        action="store_true",
+        help="Extract depth images (grayscale images representing distance).",
+    )
+
+    return parser
+
 def main(args):
 
     count = 0
-    os.makedirs(args.output_dir, exist_ok=True)
 
     if args.input_file is not None:
         if ".txt" in args.input_file:
-            # with open(args.input_file, 'r') as f:
-            #     extract_uids = f.readlines()
-            #     extract_uids = [f.strip() for f in extract_uids]
-            extract_uids = [
-                    "8343c810f80e42aa849cea818ef1b632_B075X4PTS8_B075X4J118_a0d08e45c4484b46976b44f881f6453d",
-                    "429db223039e4464a1bce14d0745be95_19ac02a101dc47968f58aba5eae4dcd2_efcba4fb2d15422580077e2160436d06_4af3c47765af45fd9b0d592a5cb7c7c2",
-                    "8343c810f80e42aa849cea818ef1b632_B075X4PTS8",
-                    "429db223039e4464a1bce14d0745be95_19ac02a101dc47968f58aba5eae4dcd2_efcba4fb2d15422580077e2160436d06",
-                    "4fc697a6dc25426ea920cf89f737a764_a0d08e45c4484b46976b44f881f6453d_5e7c981ad2974772bf85028039ab9d35"
-                    ]
+            with open(args.input_file, 'r') as f:
+                extract_uids = f.readlines()
+                extract_uids = [f.strip() for f in extract_uids]
         elif ".csv" in args.input_file:
             df = pd.read_csv(args.input_file)
             keywords = ['chair', 'sofa', 'cuboid', 'box', 'chest', 'table', 'cabinet', 'desk', 'stool', 'cupboard']
@@ -106,40 +151,30 @@ def main(args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Extract images from HDF5 files")
-    parser.add_argument(
-        "--input_dir",
-        type=str,
-        default="/data/manan/data/objaverse/blenderproc",
-        help="Input directory",
-    )
-    parser.add_argument(
-        "--input_file",
-        type=str,
-        default=None,
-        help="Input file containing the uids to extract",
-    )
-    parser.add_argument("--count", type=int, default=None, help="Number of images to extract")
-    parser.add_argument(
-        "--output_dir", type=str, default="/data/manan/.cache", help="Output directory"
-    )
-    parser.add_argument(
-        "--extract_mask", action="store_true", help="Extract mask images"
-    )
-    parser.add_argument(
-        "--extract_masked_image", action="store_true", help="Extract masked images"
-    )
-    parser.add_argument(
-        "--extract_depth", action="store_true", help="Extract depth images"
-    )
+    parser = get_image_extraction_parser()
     args = parser.parse_args()
 
-    # args.input_dir = "/home/ankitd/manan/Reflection-Exploration/BrushNet/data/blenderproc"
-    args.input_dir = "/home/ankitd/manan/Reflection-Exploration/BrushNet/data/blenderproc/rebuttal"
+    # --- Post-parsing validation and setup ---
+    if not os.path.isdir(args.input_dir):
+        parser.error(f"Error: Input directory '{args.input_dir}' does not exist or is not a directory.")
 
-    # args.input_file = "/home/ankitd/manan/Reflection-Exploration/BrushNet/data/blenderproc/train_objaverse.csv"
-    args.input_file = "placeholder.txt"
-    # args.count = 200
-    args.output_dir = "/home/ankitd/manan/Reflection-Exploration/BrushNet/data/blenderproc/rebuttal_gt_images"
+    if args.input_file and not os.path.isfile(args.input_file):
+        parser.error(f"Error: Input file '{args.input_file}' does not exist or is not a file.")
+
+    # Create output directory if it doesn't exist
+    try:
+        os.makedirs(args.output_dir, exist_ok=True)
+    except OSError as e:
+        parser.error(f"Error: Could not create output directory '{args.output_dir}': {e}")
+
+    # Example of how to use the parsed arguments
+    print(f"Input Directory: {args.input_dir}")
+    print(f"Input File: {args.input_file}")
+    print(f"Count: {args.count}")
+    print(f"Output Directory: {args.output_dir}")
+    print(f"Extract Mask: {args.extract_mask}")
+    print(f"Extract Masked Image: {args.extract_masked_image}")
+    print(f"Extract Depth: {args.extract_depth}")
+
 
     main(args)
