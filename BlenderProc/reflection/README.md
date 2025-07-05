@@ -156,11 +156,30 @@ HF_HUB_ETAG_TIMEOUT=500
 ## 🖼️ Extract Images & Visualize
 
 ### Convert HDF5 to PNG
+The `extract_images.py` script can be used to convert the generated HDF5 files into PNG images. This script offers several command-line arguments to control the input, output, and types of images extracted.
+
+Command Line Arguments for extract_images.py
+
+| Argument | Type | Description |
+|---|---|---|
+| `--input_dir` | `str` | Input directory containing HDF5 files to extract images from. |
+| `--input_file` | `str` | Optional path to a file containing UIDs (e.g., a list of object IDs) to selectively extract images for. If `None`, all found HDF5 files in `input_dir` will be processed. |
+| `--count` | `int` | Number of images to extract. If `None`, all available images will be extracted. |
+| `--output_dir` | `str` | Output directory where the extracted PNG images will be saved. |
+| `--extract_mask` | `store_true` | Flag to extract **mask images** (binary segmentation masks). |
+| `--extract_masked_image` | `store_true` | Flag to extract **masked images** (e.g., foreground objects with a black background). |
+| `--extract_depth` | `store_true` | Flag to extract **depth images** (grayscale images representing distance from the camera). |
+
+#### Usage Examples:
+
+**1. Extract all image types from a specific input directory to a specified output directory:**
 
 ```bash
-python reflection/extract_images.py
+python reflection/extract_images.py \
+    --input_dir <input_dir_path> \
+    --output_dir <output_dir_path> \
+    --extract_mask --extract_masked_image --extract_depth
 ```
-
 ### Visualize Using [FiftyOne](https://docs.voxel51.com)
 
 #### On Remote
@@ -184,4 +203,4 @@ fiftyone app connect --destination test@<remote-ip>
 ## 📂 Public Dataset
 
 - Dataset hosted on HuggingFace:  
-  👉 [Mirror-Fusion/Objaverse-Mirrors](https://huggingface.co/datasets/Mirror-Fusion/Objaverse-Mirrors)
+  👉 **Coming Soon!** 
