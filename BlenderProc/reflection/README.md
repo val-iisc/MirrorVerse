@@ -186,7 +186,8 @@ Command Line Arguments for extract_images.py
 | `--output_dir` | `str` | Output directory where the extracted PNG images will be saved. |
 | `--extract_mask` | `store_true` | Flag to extract **mask images** (binary segmentation masks). |
 | `--extract_masked_image` | `store_true` | Flag to extract **masked images** (e.g., foreground objects with a black background). |
-| `--extract_depth` | `store_true` | Flag to extract **depth images** (grayscale images representing distance from the camera). |
+| `--extract_depth` | `store_true` | Flag to extract **depth images**. |
+| `--extract_normal` | `store_true` | Flag to extract **normal map images**. |
 
 #### Usage Examples:
 
@@ -196,7 +197,7 @@ Command Line Arguments for extract_images.py
 python reflection/extract_images.py \
     --input_dir <input_dir_path> \
     --output_dir <output_dir_path> \
-    --extract_mask --extract_masked_image --extract_depth
+    --extract_mask --extract_masked_image --extract_depth --extract_normal
 ```
 ### Visualize Using [FiftyOne](https://docs.voxel51.com)
 
