@@ -3,10 +3,9 @@ import numpy as np
 import h5py
 from PIL import Image
 import argparse
-import sys
-from scene_compositor.dataset import HDF5Dataset
 import pandas as pd
 import random
+import matplotlib.pyplot as plt
 
 # seed
 random.seed(7564)
@@ -60,11 +59,61 @@ def get_image_extraction_parser():
     extraction_group.add_argument(
         "--extract_depth",
         action="store_true",
-        help="Extract depth images (grayscale images representing distance).",
+        help="Extract depth images.",
+    )
+    extraction_group.add_argument(
+        "--extract_normal",
+        action="store_true",
+        help="Extract normal map images.",
     )
 
     return parser
 
+def save_depth_map(data_array, output_path, cmap='turbo', vmin=None, vmax=None):
+    """
+    Saves a 2D NumPy array as a PNG image, applying a specified colormap.
+
+    Args:
+        data_array (np.ndarray): The 2D NumPy array to save.
+        output_path (str): The full path including filename and .png extension.
+        cmap (str or matplotlib.colors.Colormap): The colormap to apply. Defaults to 'viridis'.
+        vmin (float, optional): The minimum value for colormap normalization.
+        vmax (float, optional): The maximum value for colormap normalization.
+    """
+    if not isinstance(data_array, np.ndarray) or data_array.ndim != 2:
+        raise ValueError("Input data_array must be a 2D NumPy array.")
+
+    # Use plt.imsave to directly save the array as an image
+    # It handles colormapping and normalization internally
+    plt.imsave(output_path, data_array, cmap=cmap, vmin=vmin, vmax=vmax)
+    
+def save_normal_map(normal_map_array, output_path):
+    """
+    Saves a NumPy array representing a normal map as an RGB PNG image.
+    Normal maps are typically float arrays with values from -1 to 1 per channel.
+    This function remaps them to 0-1 for display.
+
+    Args:
+        normal_map_array (np.ndarray): A 3D NumPy array of shape (height, width, 3)
+                                       representing the normal map. Values should be
+                                       in the range [-1, 1].
+        output_path (str): The full path including filename and extension (e.g., 'output/normal_map.png').
+    """
+    if not isinstance(normal_map_array, np.ndarray) or normal_map_array.ndim != 3 or normal_map_array.shape[2] != 3:
+        raise ValueError("Input normal_map_array must be a 3D NumPy array of shape (height, width, 3).")
+
+    # Remap values from [-1, 1] to [0, 1] for image saving
+    # The common mapping for normal maps: (N + 1) / 2
+    # Where N is the normal component (-1 to 1)
+    display_normal_map = (normal_map_array + 1) / 2.0
+    
+    # Ensure values are strictly within [0, 1] after remapping,
+    # due to potential floating point inaccuracies or slight out-of-range values.
+    display_normal_map = np.clip(display_normal_map, 0, 1)
+
+    # plt.imsave directly saves the RGB array. No colormap needed.
+    plt.imsave(output_path, display_normal_map)
+    
 def main(args):
 
     count = 0
@@ -140,10 +189,16 @@ def main(args):
 
                     if args.extract_depth:
                         depth_path = os.path.join(
-                            output_subdir, f"{filename}_depth.npy"
+                            output_subdir, f"{filename}_depth.png"
                         )
                         depth_data = np.array(f["depth"])
-                        np.save(depth_path, depth_data)
+                        save_depth_map(depth_data, depth_path, cmap='turbo', vmin=0, vmax=6)
+                    if args.extract_normal:
+                        normal_path = os.path.join(
+                            output_subdir, f"{filename}_normal.png"
+                        )
+                        normal_data = np.array(f["normals"])
+                        save_normal_map(normal_data, normal_path)
                     if args.count is not None:
                         count += 1
                         if count >= args.count:
