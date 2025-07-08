@@ -147,7 +147,7 @@ def main(args):
     uids_with_incomplete_renderings = set(incomplete_render_uids) | uids_with_problematic_renderings
     
     if len(uids_with_incomplete_renderings) > 0:
-        with open(args.output_file, 'r') as f:
+        with open(args.output_file, 'w') as f:
             for uid in uids_with_incomplete_renderings:
                 f.write(f"{uid}\n")
     else:
