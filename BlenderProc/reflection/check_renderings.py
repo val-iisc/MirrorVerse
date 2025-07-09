@@ -70,7 +70,7 @@ def main(args):
                 extract_uids = f.readlines()
                 extract_uids = [f.strip() for f in extract_uids]
                 
-    print(f"Found {len(extract_uids)} in the input text file.")
+        print(f"Found {len(extract_uids)} in the input text file.")
     
     
     #Check 1: Count the number of renderings in the folder.
@@ -110,31 +110,35 @@ def main(args):
 
         uid = os.path.basename(root) # This assumes UID is the immediate parent directory name
     
-        with h5py.File(hdf5_path, "r") as f:
-            # Read the data from the file
-            image_data = np.array(f["colors"], dtype=np.uint8)
-            category_id_segmaps = np.array(f["category_id_segmaps"], dtype=np.uint8)
-            depth_data = np.array(f["depth"])
-            normal_data = np.array(f["normals"])
-            
-            if np.sum(image_data) == 0:
-                #All pixels are black
-                uids_with_problematic_renderings.add(uid)
+        try:
+            with h5py.File(hdf5_path, "r") as f:
+                # Read the data from the file
+                image_data = np.array(f["colors"], dtype=np.uint8)
+                category_id_segmaps = np.array(f["category_id_segmaps"], dtype=np.uint8)
+                depth_data = np.array(f["depth"])
+                normal_data = np.array(f["normals"])
                 
-            if np.sum(category_id_segmaps) == 0:
-                #All pixels are black
-                uids_with_problematic_renderings.add(uid)
-                
-            if np.sum(depth_data) == 0:
-                #All pixels are black
-                uids_with_problematic_renderings.add(uid)
-                
-            if np.sum(normal_data) == 0:
-                #All pixels are black
-                uids_with_problematic_renderings.add(uid)
-                
-            if np.all(normal_data == normal_data.flat[0]):
-                uids_with_problematic_renderings.add(uid)
+                if np.sum(image_data) == 0:
+                    #All pixels are black
+                    uids_with_problematic_renderings.add(uid)
+                    
+                if np.sum(category_id_segmaps) == 0:
+                    #All pixels are black
+                    uids_with_problematic_renderings.add(uid)
+                    
+                if np.sum(depth_data) == 0:
+                    #All pixels are black
+                    uids_with_problematic_renderings.add(uid)
+                    
+                if np.sum(normal_data) == 0:
+                    #All pixels are black
+                    uids_with_problematic_renderings.add(uid)
+                    
+                if np.all(normal_data == normal_data.flat[0]):
+                    uids_with_problematic_renderings.add(uid)
+        except Exception as e:
+            print(f"{uid}: {e}")
+            uids_with_problematic_renderings.add(uid)
                         
     
     if len(uids_with_problematic_renderings) > 0:

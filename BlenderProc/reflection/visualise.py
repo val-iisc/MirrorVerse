@@ -10,6 +10,13 @@ def main(args):
     else:
         file_paths = glob(os.path.join(args.data_dir, "**", "*.png"), recursive=True)
 
+        excluded_suffixes = ("_mask.png", "_depth.png", "_normal.png")
+
+        file_paths = [
+            fpath for fpath in file_paths
+            if not fpath.endswith(excluded_suffixes)
+        ]
+
         dataset = fo.Dataset.from_images(
             list(file_paths),
             name="Mirror-Dataset",
