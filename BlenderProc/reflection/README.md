@@ -173,6 +173,13 @@ python check_renderings.py \
     --output_file <output_file_path>
 ```
 
+There is another script to check if there is an object in a view. Run the following command
+```bash
+python check_object_in_view.py \
+    --input_dir <input_dir_path> \
+    --output_file <output_file_path>
+```
+
 ### Convert HDF5 to PNG
 The `extract_images.py` script can be used to convert the generated HDF5 files into PNG images. This script offers several command-line arguments to control the input, output, and types of images extracted.
 
