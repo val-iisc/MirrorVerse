@@ -21,8 +21,8 @@
 <img src='https://img.shields.io/badge/arxiv-MirrorVerse-red' alt='Paper PDF'></a>
 <a href="https://mirror-verse.github.io/">
 <img src='https://img.shields.io/badge/Project-Website-green' alt='Project Page'></a>
-<a href="ttps://mirror-verse.github.io/">
-<img src='https://img.shields.io/badge/Dataset-HuggingFace-blue' alt='Dataset Coming Soon'></a>
+<a href="https://huggingface.co/datasets/ankitIIsc/SynMirrorV2">
+<img src='https://img.shields.io/badge/Dataset-HuggingFace-blue' alt='Dataset'></a>
 <a href="https://github.com/val-iisc/Reflecting-Reality">
 <img src='https://img.shields.io/badge/Previous Work-Reflecting Reality-9cf' alt='Reflecting Reality'></a>
 
@@ -53,9 +53,9 @@ We introduce **SynMirrorV2**, a large-scale synthetic dataset containing **207K*
 
 ## 🗓️ TODO
 
-- [] Release the SynMirrorV2 Dataset
+- [X] [14/07/2025] 🔥 ~~Release the SynMirrorV2 Dataset~~
 - [] Release pre-trained checkpoints
-- [X]  [07/06/2025] 🔥 Release codebase for creating synthetic dataset [Link](BlenderProc/reflection/README.md)
+- [X]  [07/06/2025] 🔥 ~~Release codebase for creating synthetic dataset~~ [Link](BlenderProc/reflection/README.md)
 - [] Add interactive notebook demo for inference
 
 ---
