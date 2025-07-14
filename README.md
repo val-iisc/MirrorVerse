@@ -54,11 +54,20 @@ We introduce **SynMirrorV2**, a large-scale synthetic dataset containing **207K*
 ## 🗓️ TODO
 
 - [X] [14/07/2025] 🔥 ~~Release the SynMirrorV2 Dataset~~
-- [] Release pre-trained checkpoints
+- [X] Release 🔥 ~~checkpoints trained on SynMirrorV2~~ [Link](#-checkpoint-details)
 - [X]  [07/06/2025] 🔥 ~~Release codebase for creating synthetic dataset~~ [Link](BlenderProc/reflection/README.md)
 - [] Add interactive notebook demo for inference
 
 ---
+
+## 💾 Checkpoint Details
+
+The following table summarizes the key checkpoints mentioned in the project, along with their links and descriptions.
+
+| Checkpoint Name                                  | Link                                                                  | Description                                                                                                                                                                                                                                                                                                                         |
+| :----------------------------------------------- | :----------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **MirrorFusion-v2** | [Google Drive](https://drive.google.com/drive/folders/1T0ldC8xIo4Z-LJ0em5SkpZAYiI49TjcC?usp=sharing) | This checkpoint is trained on single and multiple objects from [SynMirrorV2](https://huggingface.co/datasets/ankitIIsc/SynMirrorV2).                                                                                                          |                                 |
+| **MirrorFusion-v2-MSD** | [Google Drive](https://drive.google.com/drive/folders/1raz52DndBbkyEIIQn1IFUA_56tgYCagz?usp=sharing) | This checkpoint is finetuned on real-world [MSD](https://mhaiyang.github.io/ICCV2019_MirrorNet/index) dataset.                                                                                                          |                                 |
 
 ## 🤝🏼 Citation
 ```
